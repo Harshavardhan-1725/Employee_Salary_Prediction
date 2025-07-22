@@ -1,52 +1,30 @@
-# model_training.py
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
 import cloudpickle
 
-# Load dataset
+# Load data
 data = pd.read_csv("adult.csv")
-
-# Simple preprocessing
 data = data[(data['age'] >= 17) & (data['age'] <= 75)]
 data = data.drop(columns=['education'])
 
-from sklearn.preprocessing import LabelEncoder
+# Encode categorical columns
 encoder = LabelEncoder()
 for col in ['workclass', 'marital-status', 'occupation', 'relationship', 'race', 'gender', 'native-country']:
     data[col] = encoder.fit_transform(data[col])
 
-x = data.drop(columns=['income'])
+X = data.drop(columns=['income'])
 y = data['income']
 
-X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Train multiple models
-models = {
-    "LogisticRegression": LogisticRegression(max_iter=1000),
-    "RandomForest": RandomForestClassifier(),
-    "KNN": KNeighborsClassifier(),
-    "SVM": SVC(),
-    "GradientBoosting": GradientBoostingClassifier()
-}
+model = RandomForestClassifier()
+model.fit(X_train, y_train)
 
-results = {}
-
-for name, model in models.items():
-    model.fit(X_train, y_train)
-    preds = model.predict(X_test)
-    acc = accuracy_score(y_test, preds)
-    results[name] = acc
-    print(f"{name}: {acc:.4f}")
-
-# Save best model using cloudpickle
-best_model_name = max(results, key=results.get)
-best_model = models[best_model_name]
+# Save model using cloudpickle
 with open("best_model.pkl", "wb") as f:
-    cloudpickle.dump(best_model, f)
+    cloudpickle.dump(model, f)
 
-print(f"✅ Saved best model ({best_model_name}) using cloudpickle.")
+print("✅ Model trained and saved as best_model.pkl")
