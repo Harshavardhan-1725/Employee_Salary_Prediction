@@ -1,20 +1,21 @@
+# main.py
 import streamlit as st
 import pandas as pd
-import joblib
+import cloudpickle
 
-# ✅ Load the trained model using joblib (correct way)
+# Load model using cloudpickle
 @st.cache_resource
 def load_model():
-    return joblib.load("best_model.pkl")
+    with open("best_model.pkl", "rb") as f:
+        return cloudpickle.load(f)
 
 model = load_model()
 
-# 🧾 Streamlit App Title and Info
 st.set_page_config(page_title="Employee Salary Classification", page_icon="💼", layout="centered")
 st.title("💼 Employee Salary Classification App")
 st.markdown("Predict whether an employee earns >50K or ≤50K based on input features.")
 
-# 📋 Sidebar inputs
+# Sidebar inputs
 st.sidebar.header("Input Employee Details")
 age = st.sidebar.slider("Age", 18, 65, 30)
 educational_num = st.sidebar.slider("Educational Number (5 to 16)", 5, 16, 10)
@@ -29,10 +30,10 @@ marital_status = st.sidebar.slider("Marital Status (Encoded)", 0, 3, 1)
 capital_gain = st.sidebar.number_input("Capital Gain", 0, 99999, 0)
 capital_loss = st.sidebar.number_input("Capital Loss", 0, 99999, 0)
 
-# 🧠 Gender encoding
+# Encode gender
 gender_encoded = 1 if gender == "Male" else 0
 
-# 📊 Create input dataframe
+# Create input DataFrame
 input_df = pd.DataFrame({
     'age': [age],
     'workclass': [workclass],
@@ -51,12 +52,12 @@ input_df = pd.DataFrame({
 st.write("### 🔎 Input Data")
 st.write(input_df)
 
-# 🚀 Make prediction
+# Predict
 if st.button("Predict Salary Class"):
     prediction = model.predict(input_df)
     st.success(f"✅ Prediction: {'>50K' if prediction[0] == 1 else '<=50K'}")
 
-# 📂 Batch prediction
+# Batch prediction
 st.markdown("---")
 st.markdown("#### 📂 Batch Prediction")
 uploaded_file = st.file_uploader("Upload a CSV file for batch prediction", type="csv")
