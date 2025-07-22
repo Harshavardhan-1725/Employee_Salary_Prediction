@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import joblib
 import plotly.express as px
-from streamlit_extras.let_it_rain import rain
 from streamlit_extras.colored_header import colored_header
 
 st.set_page_config(page_title="💼 Salary Classifier", page_icon="💼", layout="centered")
@@ -45,7 +44,6 @@ st.markdown("""
 
 # Load model and column names
 @st.cache_data
-
 def load_model():
     model = joblib.load("best_model.pkl")
     columns = joblib.load("model_columns.pkl")
@@ -66,9 +64,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("### 👋 Welcome to the Employee Salary Predictor")
-st.markdown('<div class="animated-title">🔮 Smart AI Tool to Predict Salaries</div>', unsafe_allow_html=True)
-
 # Language selection
 lang = st.selectbox("🌐 Choose Language", ["English", "Hindi", "Telugu"])
 
@@ -80,7 +75,10 @@ labels = {
         "predicted_income": "💰 Predicted Income: ",
         "upload_csv": "📁 Upload CSV for Bulk Prediction (Optional)",
         "download_button": "⬇️ Download Predictions as CSV",
-        "welcome": "Welcome"
+        "welcome": "Welcome",
+        "enter_details": "🔍 Enter Employee Details",
+        "preview": "🔍 Preview of uploaded data:",
+        "completed": "✅ Predictions completed!"
     },
     "Hindi": {
         "title": "💼 कर्मचारी वेतन वर्गीकरण",
@@ -88,7 +86,10 @@ labels = {
         "predicted_income": "💰 अंकानित आय: ",
         "upload_csv": "📁 CSV अपलोड करें (थोक पूर्वानुमान के लिए)",
         "download_button": "⬇️ CSV डाउनलोड करें",
-        "welcome": "स्वागत है"
+        "welcome": "स्वागत है",
+        "enter_details": "🔍 कर्मचारी विवरण दर्ज करें",
+        "preview": "🔍 अपलोड किए गए डेटा का पूर्वावलोकन:",
+        "completed": "✅ पूर्वानुमान पूरे हुए!"
     },
     "Telugu": {
         "title": "💼 ఉద్యోగి జీతం వర్గీకరణ",
@@ -96,14 +97,19 @@ labels = {
         "predicted_income": "💰 అంచన జీతం: ",
         "upload_csv": "📁 CSV అప్లోడ్ చేయం (బల్క్ పూర్వానుమానకు కోసంది)",
         "download_button": "⬇️ CSV డాఉన్లోడ్ చేయం",
-        "welcome": "స్వాగతం"
+        "welcome": "స్వాగతం",
+        "enter_details": "🔍 ఉద్యోగి వివరాలు నమోదు చేయండి",
+        "preview": "🔍 అప్లోడ్ చేసిన డేటా ప్రివ్యూకు:",
+        "completed": "✅ అంచనాలు పూర్తయ్యాయి!"
     }
 }
 
+st.markdown(f"### 👋 {labels[lang]['welcome']} to the Employee Salary Predictor")
+st.markdown(f'<div class="animated-title">🔮 Smart AI Tool to Predict Salaries</div>', unsafe_allow_html=True)
 st.title(labels[lang]["title"])
 
 # --- Single Prediction Input ---
-st.subheader("🔍 Enter Employee Details")
+st.subheader(labels[lang]["enter_details"])
 
 age = st.number_input("Age", min_value=18, max_value=100)
 workclass = st.selectbox("Workclass", [
@@ -135,7 +141,6 @@ if st.button(labels[lang]["predict_button"]):
     prediction = model.predict(encoded)[0]
     st.session_state.predictions.append(prediction)
 
-    rain(emoji="💸", font_size=30, falling_speed=5, animation_length="infinite")
     st.success(labels[lang]["predicted_income"] + f"**{prediction}**")
 
     # Show animated chart for single prediction (optional)
@@ -160,7 +165,7 @@ uploaded_file = st.file_uploader("Upload CSV with employee records", type=["csv"
 
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
-    st.write("🔍 Preview of uploaded data:", df.head())
+    st.write(labels[lang]["preview"], df.head())
 
     df_encoded = pd.get_dummies(df)
     df_encoded = df_encoded.reindex(columns=model_columns, fill_value=0)
@@ -168,7 +173,7 @@ if uploaded_file:
     df["Prediction"] = predictions
     st.session_state.bulk_df = df
 
-    st.success("✅ Predictions completed!")
+    st.success(labels[lang]["completed"])
     st.dataframe(df)
 
     pie_chart = px.pie(df, names="education", title="Education Level Distribution")
