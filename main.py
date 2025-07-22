@@ -5,10 +5,8 @@ import plotly.express as px
 from streamlit_extras.let_it_rain import rain
 from streamlit_extras.avatar import avatar
 from streamlit_extras.colored_header import colored_header
-from googletrans import Translator
 
 st.set_page_config(page_title="💼 Salary Classifier", page_icon="💼", layout="centered")
-translator = Translator()
 
 st.markdown("""
     <style>
@@ -92,8 +90,8 @@ labels = {
         "title": "💼 ఉద్యోగి జీతం వర్గీకరణ",
         "predict_button": "✨ జీతం అంచనా వేయండి",
         "predicted_income": "💰 అంచనా జీతం: ",
-        "upload_csv": "📁 CSV అప్లోడ్ చేయండి (బల్క్ పూర్వానుమానానికి)",
-        "download_button": "⬇️ CSV డౌన్లోడ్ చేయండి",
+        "upload_csv": "📁 CSV అప్లోడ్ చేయం (బల్క్ పూర్వానుమానకు కోసంది)",
+        "download_button": "⬇️ CSV డాఉన్లోడ్ చేయం",
         "welcome": "స్వాగతం"
     }
 }
