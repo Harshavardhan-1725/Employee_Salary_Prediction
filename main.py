@@ -61,7 +61,7 @@ if "bulk_df" not in st.session_state:
     st.session_state.bulk_df = pd.DataFrame()
 
 # Profile welcome
-avatar(name="👩‍💼", size=100)
+avatar("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", size=100)
 st.markdown("### 👋 Welcome to the Employee Salary Predictor")
 st.markdown('<div class="animated-title">🔮 Smart AI Tool to Predict Salaries</div>', unsafe_allow_html=True)
 
@@ -80,8 +80,8 @@ labels = {
     },
     "Hindi": {
         "title": "💼 कर्मचारी वेतन वर्गीकरण",
-        "predict_button": "✨ वेतन का अनुमान लगाएं",
-        "predicted_income": "💰 अनुमानित आय: ",
+        "predict_button": "✨ वेतन का अंकान लगाएं",
+        "predicted_income": "💰 अंकानित आय: ",
         "upload_csv": "📁 CSV अपलोड करें (थोक पूर्वानुमान के लिए)",
         "download_button": "⬇️ CSV डाउनलोड करें",
         "welcome": "स्वागत है"
@@ -89,7 +89,7 @@ labels = {
     "Telugu": {
         "title": "💼 ఉద్యోగి జీతం వర్గీకరణ",
         "predict_button": "✨ జీతం అంచనా వేయండి",
-        "predicted_income": "💰 అంచనా జీతం: ",
+        "predicted_income": "💰 అంచన జీతం: ",
         "upload_csv": "📁 CSV అప్లోడ్ చేయం (బల్క్ పూర్వానుమానకు కోసంది)",
         "download_button": "⬇️ CSV డాఉన్లోడ్ చేయం",
         "welcome": "స్వాగతం"
