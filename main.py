@@ -1,83 +1,61 @@
+# main.py
+
 import streamlit as st
 import pandas as pd
-import cloudpickle
+import joblib
 
-@st.cache_resource
+# ✅ Load model and column names using joblib (NOT cloudpickle)
+@st.cache_data
 def load_model():
-    with open("best_model.pkl", "rb") as f:
-        return cloudpickle.load(f)
+    model = joblib.load("best_model.pkl")  # Load your model
+    columns = joblib.load("model_columns.pkl")  # Load expected input features
+    return model, columns
 
-model = load_model()
+# Load model and feature columns
+model, model_columns = load_model()
 
-st.set_page_config(page_title="Salary Classifier", page_icon="💼", layout="centered")
+# Streamlit App UI
 st.title("💼 Employee Salary Classification App")
-st.markdown("Predict whether an employee earns >50K or ≤50K based on input features.")
+st.write("Predict whether an employee earns >50K or ≤50K based on input features.")
 
-# Sidebar input
-st.sidebar.header("Enter Employee Details")
-age = st.sidebar.slider("Age", 17, 75, 30)
-fnlwgt = st.sidebar.number_input("Final Weight (fnlwgt)", 10000, 1000000, 50000)
-education = st.sidebar.slider("Education (Encoded)", 0, 15, 10)
-educational_num = st.sidebar.slider("Education Number", 1, 16, 10)
-workclass = st.sidebar.slider("Workclass (Encoded)", 0, 8, 3)
-occupation = st.sidebar.slider("Occupation (Encoded)", 0, 13, 4)
-relationship = st.sidebar.slider("Relationship (Encoded)", 0, 5, 2)
-race = st.sidebar.slider("Race (Encoded)", 0, 4, 1)
-gender = st.sidebar.selectbox("Gender", ["Male", "Female"])
-native_country = st.sidebar.slider("Native Country (Encoded)", 0, 40, 10)
-marital_status = st.sidebar.slider("Marital Status (Encoded)", 0, 6, 2)
-capital_gain = st.sidebar.number_input("Capital Gain", 0, 100000, 0)
-capital_loss = st.sidebar.number_input("Capital Loss", 0, 5000, 0)
-hours_per_week = st.sidebar.slider("Hours per Week", 1, 99, 40)
+st.subheader("🔎 Input Data")
 
-# Encode gender
-gender_encoded = 1 if gender == "Male" else 0
-
-# Final input features (must match training order)
-input_df = pd.DataFrame([[
-    age,
-    workclass,
-    fnlwgt,
-    education,
-    educational_num,
-    marital_status,
-    occupation,
-    relationship,
-    race,
-    gender_encoded,
-    capital_gain,
-    capital_loss,
-    hours_per_week,
-    native_country
-]], columns=[
-    'age',
-    'workclass',
-    'fnlwgt',
-    'education',
-    'educational-num',
-    'marital-status',
-    'occupation',
-    'relationship',
-    'race',
-    'gender',
-    'capital-gain',
-    'capital-loss',
-    'hours-per-week',
-    'native-country'
+# Input form
+age = st.number_input("Age", min_value=18, max_value=100)
+workclass = st.selectbox("Workclass", [
+    "Private", "Self-emp-not-inc", "Self-emp-inc",
+    "Federal-gov", "Local-gov", "State-gov", "Without-pay", "Never-worked"
 ])
+education = st.selectbox("Education", [
+    "Bachelors", "HS-grad", "11th", "Masters", "9th", "Some-college",
+    "Assoc-acdm", "Assoc-voc", "7th-8th", "Doctorate", "Prof-school"
+])
+occupation = st.selectbox("Occupation", [
+    "Tech-support", "Craft-repair", "Other-service", "Sales", "Exec-managerial",
+    "Prof-specialty", "Handlers-cleaners", "Machine-op-inspct", "Adm-clerical",
+    "Farming-fishing", "Transport-moving", "Priv-house-serv", "Protective-serv",
+    "Armed-Forces"
+])
+hours_per_week = st.slider("Hours per Week", 1, 100, 40)
 
-st.write("🔍 Input Preview:")
-st.write(input_df)
+# Predict
+if st.button("Predict Salary"):
+    # Prepare user input as DataFrame
+    input_data = {
+        "age": age,
+        "workclass": workclass,
+        "education": education,
+        "occupation": occupation,
+        "hours_per_week": hours_per_week
+    }
 
-# 🧪 Debug info
-st.write("📊 Input shape:", input_df.shape)
-st.write("📊 Model expects:", getattr(model, 'n_features_in_', 'Unknown'), "features")
+    input_df = pd.DataFrame([input_data])
 
-# Predict safely
-if st.button("Predict Salary Class"):
-    try:
-        prediction = model.predict(input_df.values)
-        result = ">50K" if prediction[0] == 1 else "≤50K"
-        st.success(f"💡 Prediction: Employee earns {result}")
-    except Exception as e:
-        st.error(f"❌ Error during prediction: {e}")
+    # One-hot encode and align columns
+    input_encoded = pd.get_dummies(input_df)
+    input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
+
+    # Make prediction
+    prediction = model.predict(input_encoded)[0]
+
+    st.success(f"💰 Predicted Income: **{prediction}**")
