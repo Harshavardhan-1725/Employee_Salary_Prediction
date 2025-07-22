@@ -2,10 +2,17 @@ import streamlit as st
 import pandas as pd
 import joblib
 import plotly.express as px
-from io import BytesIO
-import base64
 
-st.set_page_config(page_title="💼 Employee Salary Classifier", layout="wide", page_icon="💰")
+st.set_page_config(page_title="💼 Salary Classifier", page_icon="💼", layout="centered")
+st.markdown("""
+    <style>
+    .main {
+        background-color: #f0f2f6;
+        font-family: 'Segoe UI', sans-serif;
+        padding: 2rem;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # Load model and column names
 @st.cache_data
@@ -17,94 +24,84 @@ def load_model():
 
 model, model_columns = load_model()
 
+# Initialize prediction tracking
+if "predictions" not in st.session_state:
+    st.session_state.predictions = []
+
+# App Header
+st.title("💼 Employee Salary Classification")
 st.markdown("""
-    <style>
-    .main {
-        background-color: #f9fbfd;
+Predict whether an employee earns **>50K** or **≤50K** based on input features.
+""")
+
+# --- Single Prediction Input ---
+st.subheader("🔍 Enter Employee Details")
+
+age = st.number_input("Age", min_value=18, max_value=100)
+workclass = st.selectbox("Workclass", [
+    "Private", "Self-emp-not-inc", "Self-emp-inc",
+    "Federal-gov", "Local-gov", "State-gov", "Without-pay", "Never-worked"])
+education = st.selectbox("Education", [
+    "Bachelors", "HS-grad", "11th", "Masters", "9th", "Some-college",
+    "Assoc-acdm", "Assoc-voc", "7th-8th", "Doctorate", "Prof-school"])
+occupation = st.selectbox("Occupation", [
+    "Tech-support", "Craft-repair", "Other-service", "Sales", "Exec-managerial",
+    "Prof-specialty", "Handlers-cleaners", "Machine-op-inspct", "Adm-clerical",
+    "Farming-fishing", "Transport-moving", "Priv-house-serv", "Protective-serv",
+    "Armed-Forces"])
+hours_per_week = st.slider("Hours per Week", 1, 100, 40)
+
+if st.button("✨ Predict Salary"):
+    input_data = {
+        "age": age,
+        "workclass": workclass,
+        "education": education,
+        "occupation": occupation,
+        "hours_per_week": hours_per_week
     }
-    .css-1d391kg, .css-1v0mbdj p {
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 18px;
-    }
-    .stButton>button {
-        background-color: #1f77b4;
-        color: white;
-        border-radius: 8px;
-        padding: 10px 24px;
-        font-weight: bold;
-    }
-    .stButton>button:hover {
-        background-color: #135e96;
-    }
-    </style>
-""", unsafe_allow_html=True)
 
-st.title("💼 Employee Salary Classification App")
-st.write("Predict whether an employee earns >50K or ≤50K based on input features.")
+    input_df = pd.DataFrame([input_data])
+    encoded = pd.get_dummies(input_df)
+    encoded = encoded.reindex(columns=model_columns, fill_value=0)
 
-col1, col2 = st.columns([2, 2])
+    prediction = model.predict(encoded)[0]
+    st.session_state.predictions.append(prediction)
 
-with col1:
-    st.subheader("🔎 Input Employee Details")
-    age = st.slider("Age", 18, 100, 30)
-    workclass = st.selectbox("Workclass", [
-        "Private", "Self-emp-not-inc", "Self-emp-inc",
-        "Federal-gov", "Local-gov", "State-gov", "Without-pay", "Never-worked"])
-    education = st.selectbox("Education", [
-        "Bachelors", "HS-grad", "11th", "Masters", "9th", "Some-college",
-        "Assoc-acdm", "Assoc-voc", "7th-8th", "Doctorate", "Prof-school"])
-    occupation = st.selectbox("Occupation", [
-        "Tech-support", "Craft-repair", "Other-service", "Sales", "Exec-managerial",
-        "Prof-specialty", "Handlers-cleaners", "Machine-op-inspct", "Adm-clerical",
-        "Farming-fishing", "Transport-moving", "Priv-house-serv", "Protective-serv",
-        "Armed-Forces"])
-    hours_per_week = st.number_input("Hours per Week", min_value=1, max_value=100, value=40)
+    st.success(f"💰 Predicted Income: **{prediction}**")
 
-    if st.button("🎯 Predict Salary"):
-        input_data = {
-            "age": age,
-            "workclass": workclass,
-            "education": education,
-            "occupation": occupation,
-            "hours_per_week": hours_per_week
-        }
-        input_df = pd.DataFrame([input_data])
-        input_encoded = pd.get_dummies(input_df)
-        input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
-        prediction = model.predict(input_encoded)[0]
+# --- Show Prediction Bar Chart ---
+if st.session_state.predictions:
+    st.subheader("📊 Live Prediction Summary")
+    pred_counts = pd.Series(st.session_state.predictions).value_counts().reset_index()
+    pred_counts.columns = ["Income", "Count"]
+    bar_chart = px.bar(pred_counts, x="Income", y="Count", color="Income",
+                       title="Prediction Count by Class", text="Count")
+    st.plotly_chart(bar_chart, use_container_width=True)
 
-        if prediction == '>50K':
-            st.success("💰 Predicted Income: **>50K**")
-        else:
-            st.warning("💸 Predicted Income: **≤50K**")
+# --- Bulk Prediction from CSV ---
+st.subheader("📁 Upload CSV for Bulk Prediction (Optional)")
+uploaded_file = st.file_uploader("Upload CSV with employee records", type=["csv"])
 
-with col2:
-    st.subheader("📁 Upload CSV for Bulk Prediction")
-    uploaded_file = st.file_uploader("Upload a CSV file", type="csv")
+if uploaded_file:
+    df = pd.read_csv(uploaded_file)
+    st.write("🔍 Preview of uploaded data:", df.head())
 
-    if uploaded_file:
-        df = pd.read_csv(uploaded_file)
-        df_encoded = pd.get_dummies(df)
-        df_encoded = df_encoded.reindex(columns=model_columns, fill_value=0)
-        df['prediction'] = model.predict(df_encoded)
+    df_encoded = pd.get_dummies(df)
+    df_encoded = df_encoded.reindex(columns=model_columns, fill_value=0)
+    predictions = model.predict(df_encoded)
+    df["Prediction"] = predictions
 
-        st.success("✅ Predictions Done!")
-        st.dataframe(df.head())
+    st.success("✅ Predictions completed!")
+    st.dataframe(df)
 
-        # Downloadable CSV
-        def convert_df(df):
-            return df.to_csv(index=False).encode('utf-8')
+    # Show chart for uploaded predictions
+    pie_chart = px.pie(df, names="education", title="Education Level Distribution")
+    pred_bar = px.bar(df["Prediction"].value_counts().reset_index(), x="index", y="Prediction", 
+                      title="Prediction Counts", labels={"index": "Income"})
 
-        csv = convert_df(df)
-        st.download_button("⬇️ Download Results as CSV", csv, "salary_predictions.csv", "text/csv")
+    st.plotly_chart(pie_chart)
+    st.plotly_chart(pred_bar)
 
-        # Plot charts
-        st.subheader("📊 Insights")
-        pie_fig = px.pie(df, names='education', title='Education Level Distribution')
-        st.plotly_chart(pie_fig, use_container_width=True)
-
-        bar_fig = px.histogram(df, x='prediction', color='prediction', title='Prediction Count')
-        st.plotly_chart(bar_fig, use_container_width=True)
-
-st.markdown("---")
-st.caption("Made with ❤️ using Streamlit | Salary Classifier")
+    # Downloadable result
+    csv_download = df.to_csv(index=False).encode("utf-8")
+    st.download_button("⬇️ Download Predictions as CSV", csv_download, "predictions.csv", "text/csv")
