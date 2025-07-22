@@ -1,49 +1,10 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import json
 import requests
+import plotly.graph_objects as go
 
-# Custom CSS Styling
-def load_custom_css():
-    st.markdown("""
-        <style>
-            .main {
-                background-color: #f0f2f6;
-                padding: 20px;
-                border-radius: 15px;
-            }
-            .title {
-                font-size: 36px;
-                font-weight: bold;
-                color: #4b4bfb;
-            }
-            .subtitle {
-                font-size: 20px;
-                color: #555;
-            }
-            .result {
-                font-size: 28px;
-                font-weight: bold;
-                color: green;
-            }
-            .stButton>button {
-                background-color: #4b4bfb;
-                color: white;
-                font-weight: bold;
-                border-radius: 10px;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
-# Lottie Animation Loader
-def load_lottie_url(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
-
-# Load Model and Columns
+# Load model and columns
 @st.cache_data
 def load_model():
     model = joblib.load("best_model.pkl")
@@ -51,41 +12,83 @@ def load_model():
     return model, columns
 
 model, model_columns = load_model()
-load_custom_css()
 
-# Title Section with Animation
-col1, col2 = st.columns([1, 2])
+# Load animation from URL
+def load_lottie_url(url):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+# Add modern CSS styling
+def custom_css():
+    st.markdown("""
+        <style>
+            .main-panel {
+                background: linear-gradient(135deg, #e0f7fa, #ffffff);
+                padding: 30px;
+                border-radius: 20px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            }
+            .stButton>button {
+                background-color: #3b5998;
+                color: white;
+                border-radius: 10px;
+                font-weight: bold;
+                padding: 10px 20px;
+                border: none;
+                transition: all 0.3s ease;
+            }
+            .stButton>button:hover {
+                background-color: #1c2d70;
+                transform: scale(1.05);
+            }
+            .title {
+                font-size: 42px;
+                font-weight: 800;
+                color: #2c3e50;
+            }
+            .subtitle {
+                font-size: 20px;
+                color: #666;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+custom_css()
+
+# Header
+st.columns([1, 8, 1])[1].markdown("<div class='title'>💼 Employee Salary Predictor</div>", unsafe_allow_html=True)
+st.columns([1, 8, 1])[1].markdown("<div class='subtitle'>Predict if an employee earns >50K or ≤50K with confidence chart</div>", unsafe_allow_html=True)
+
+st.markdown("<div class='main-panel'>", unsafe_allow_html=True)
+
+# Input form
+col1, col2 = st.columns(2)
+
 with col1:
-    lottie = load_lottie_url("https://assets3.lottiefiles.com/packages/lf20_tijmpn5v.json")
-    st_lottie = st.components.v1.html(f"""
-        <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_tijmpn5v.json" background="transparent"
-         speed="1" style="width: 250px; height: 250px;" loop autoplay></lottie-player>
-    """, height=250)
+    age = st.number_input("👤 Age", 18, 100, 30)
+    education = st.selectbox("🎓 Education", [
+        "Bachelors", "HS-grad", "11th", "Masters", "9th", "Some-college",
+        "Assoc-acdm", "Assoc-voc", "7th-8th", "Doctorate", "Prof-school"
+    ])
+    hours_per_week = st.slider("⏱️ Hours per Week", 1, 100, 40)
+
 with col2:
-    st.markdown("<div class='main'><div class='title'>💼 Employee Salary Classification</div>", unsafe_allow_html=True)
-    st.markdown("<div class='subtitle'>Predict whether an employee earns >50K or ≤50K based on input details.</div></div>", unsafe_allow_html=True)
+    workclass = st.selectbox("🏢 Workclass", [
+        "Private", "Self-emp-not-inc", "Self-emp-inc",
+        "Federal-gov", "Local-gov", "State-gov", "Without-pay", "Never-worked"
+    ])
+    occupation = st.selectbox("🛠️ Occupation", [
+        "Tech-support", "Craft-repair", "Other-service", "Sales", "Exec-managerial",
+        "Prof-specialty", "Handlers-cleaners", "Machine-op-inspct", "Adm-clerical",
+        "Farming-fishing", "Transport-moving", "Priv-house-serv", "Protective-serv",
+        "Armed-Forces"
+    ])
 
-# Input Fields
-st.subheader("🔎 Input Data")
+# Predict
+st.markdown("### 📊 Prediction Result")
 
-age = st.number_input("👤 Age", min_value=18, max_value=100, step=1)
-workclass = st.selectbox("🏢 Workclass", [
-    "Private", "Self-emp-not-inc", "Self-emp-inc",
-    "Federal-gov", "Local-gov", "State-gov", "Without-pay", "Never-worked"
-])
-education = st.selectbox("🎓 Education", [
-    "Bachelors", "HS-grad", "11th", "Masters", "9th", "Some-college",
-    "Assoc-acdm", "Assoc-voc", "7th-8th", "Doctorate", "Prof-school"
-])
-occupation = st.selectbox("🛠️ Occupation", [
-    "Tech-support", "Craft-repair", "Other-service", "Sales", "Exec-managerial",
-    "Prof-specialty", "Handlers-cleaners", "Machine-op-inspct", "Adm-clerical",
-    "Farming-fishing", "Transport-moving", "Priv-house-serv", "Protective-serv",
-    "Armed-Forces"
-])
-hours_per_week = st.slider("⏱️ Hours per Week", 1, 100, 40)
-
-# Predict Button
 if st.button("🚀 Predict Salary"):
     input_data = {
         "age": age,
@@ -94,14 +97,32 @@ if st.button("🚀 Predict Salary"):
         "occupation": occupation,
         "hours_per_week": hours_per_week
     }
-    input_df = pd.DataFrame([input_data])
-    input_encoded = pd.get_dummies(input_df)
-    input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
 
-    prediction = model.predict(input_encoded)[0]
-    
-    if prediction == ">50K":
-        st.success("💰 Predicted Income: **>50K** ✅")
-    else:
-        st.warning("💵 Predicted Income: **≤50K** ❗")
+    df = pd.DataFrame([input_data])
+    encoded = pd.get_dummies(df)
+    encoded = encoded.reindex(columns=model_columns, fill_value=0)
 
+    prediction = model.predict(encoded)[0]
+    probability = model.predict_proba(encoded)[0]  # returns [P(<=50K), P(>50K)]
+
+    label = ">50K" if prediction == ">50K" else "≤50K"
+    st.success(f"💰 Predicted Income: **{label}**")
+
+    # Chart
+    st.markdown("#### 🔍 Prediction Confidence")
+    fig = go.Figure(data=[go.Pie(
+        labels=["≤50K", ">50K"],
+        values=probability,
+        hole=0.4,
+        marker=dict(colors=['#f94144', '#43aa8b']),
+        hoverinfo="label+percent",
+        textinfo="label+percent"
+    )])
+    fig.update_layout(
+        showlegend=True,
+        height=400,
+        margin=dict(t=10, b=10, l=10, r=10)
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+st.markdown("</div>", unsafe_allow_html=True)
