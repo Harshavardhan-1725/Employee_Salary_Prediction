@@ -1,12 +1,49 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import base64
+import json
+import requests
 
-# Page config
-st.set_page_config(page_title="Salary Prediction", page_icon="💼", layout="centered")
+# Custom CSS Styling
+def load_custom_css():
+    st.markdown("""
+        <style>
+            .main {
+                background-color: #f0f2f6;
+                padding: 20px;
+                border-radius: 15px;
+            }
+            .title {
+                font-size: 36px;
+                font-weight: bold;
+                color: #4b4bfb;
+            }
+            .subtitle {
+                font-size: 20px;
+                color: #555;
+            }
+            .result {
+                font-size: 28px;
+                font-weight: bold;
+                color: green;
+            }
+            .stButton>button {
+                background-color: #4b4bfb;
+                color: white;
+                font-weight: bold;
+                border-radius: 10px;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
-# Load model and columns
+# Lottie Animation Loader
+def load_lottie_url(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+# Load Model and Columns
 @st.cache_data
 def load_model():
     model = joblib.load("best_model.pkl")
@@ -14,85 +51,42 @@ def load_model():
     return model, columns
 
 model, model_columns = load_model()
+load_custom_css()
 
-# --- CSS for Styling ---
-st.markdown("""
-    <style>
-    html, body, [class*="css"]  {
-        background-color: #0f2027;
-        background-image: linear-gradient(to right, #2c5364, #203a43, #0f2027);
-        color: white;
-        font-family: 'Segoe UI', sans-serif;
-    }
-
-    .stButton>button {
-        background-color: #00c9a7;
-        color: white;
-        padding: 0.6em 2em;
-        border-radius: 30px;
-        border: none;
-        transition: 0.3s ease;
-    }
-
-    .stButton>button:hover {
-        background-color: #02a188;
-        transform: scale(1.05);
-    }
-
-    .glass-card {
-        background: rgba(255, 255, 255, 0.08);
-        border-radius: 15px;
-        padding: 25px;
-        margin-bottom: 20px;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-    }
-
-    .result-box {
-        background: linear-gradient(135deg, #00c9a7, #92fe9d);
-        color: black;
-        padding: 20px;
-        border-radius: 15px;
-        text-align: center;
-        font-size: 1.5em;
-        font-weight: bold;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# --- Title Section ---
-st.markdown("<h1 style='text-align: center;'>💼 Employee Salary Classifier</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 18px;'>Predict if an employee earns more than 50K or not</p>", unsafe_allow_html=True)
-
-st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-
-# --- Inputs ---
-col1, col2 = st.columns(2)
-
+# Title Section with Animation
+col1, col2 = st.columns([1, 2])
 with col1:
-    age = st.number_input("🎂 Age", 18, 100, 30)
-    education = st.selectbox("🎓 Education", [
-        "Bachelors", "HS-grad", "11th", "Masters", "9th", "Some-college",
-        "Assoc-acdm", "Assoc-voc", "7th-8th", "Doctorate", "Prof-school"
-    ])
-    hours_per_week = st.slider("🕒 Hours per Week", 1, 100, 40)
-
+    lottie = load_lottie_url("https://assets3.lottiefiles.com/packages/lf20_tijmpn5v.json")
+    st_lottie = st.components.v1.html(f"""
+        <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_tijmpn5v.json" background="transparent"
+         speed="1" style="width: 250px; height: 250px;" loop autoplay></lottie-player>
+    """, height=250)
 with col2:
-    workclass = st.selectbox("🏢 Workclass", [
-        "Private", "Self-emp-not-inc", "Self-emp-inc", "Federal-gov",
-        "Local-gov", "State-gov", "Without-pay", "Never-worked"
-    ])
-    occupation = st.selectbox("🛠️ Occupation", [
-        "Tech-support", "Craft-repair", "Other-service", "Sales", "Exec-managerial",
-        "Prof-specialty", "Handlers-cleaners", "Machine-op-inspct", "Adm-clerical",
-        "Farming-fishing", "Transport-moving", "Priv-house-serv", "Protective-serv",
-        "Armed-Forces"
-    ])
+    st.markdown("<div class='main'><div class='title'>💼 Employee Salary Classification</div>", unsafe_allow_html=True)
+    st.markdown("<div class='subtitle'>Predict whether an employee earns >50K or ≤50K based on input details.</div></div>", unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
+# Input Fields
+st.subheader("🔎 Input Data")
 
-# --- Prediction ---
-if st.button("🔮 Predict Salary"):
+age = st.number_input("👤 Age", min_value=18, max_value=100, step=1)
+workclass = st.selectbox("🏢 Workclass", [
+    "Private", "Self-emp-not-inc", "Self-emp-inc",
+    "Federal-gov", "Local-gov", "State-gov", "Without-pay", "Never-worked"
+])
+education = st.selectbox("🎓 Education", [
+    "Bachelors", "HS-grad", "11th", "Masters", "9th", "Some-college",
+    "Assoc-acdm", "Assoc-voc", "7th-8th", "Doctorate", "Prof-school"
+])
+occupation = st.selectbox("🛠️ Occupation", [
+    "Tech-support", "Craft-repair", "Other-service", "Sales", "Exec-managerial",
+    "Prof-specialty", "Handlers-cleaners", "Machine-op-inspct", "Adm-clerical",
+    "Farming-fishing", "Transport-moving", "Priv-house-serv", "Protective-serv",
+    "Armed-Forces"
+])
+hours_per_week = st.slider("⏱️ Hours per Week", 1, 100, 40)
+
+# Predict Button
+if st.button("🚀 Predict Salary"):
     input_data = {
         "age": age,
         "workclass": workclass,
@@ -100,28 +94,14 @@ if st.button("🔮 Predict Salary"):
         "occupation": occupation,
         "hours_per_week": hours_per_week
     }
-
     input_df = pd.DataFrame([input_data])
     input_encoded = pd.get_dummies(input_df)
     input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
 
     prediction = model.predict(input_encoded)[0]
     
-    try:
-        proba = model.predict_proba(input_encoded)[0]
-        confidence = round(max(proba) * 100, 2)
-    except:
-        confidence = None
-
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    
     if prediction == ">50K":
-        st.markdown('<div class="result-box">💰 Predicted Income: >50K</div>', unsafe_allow_html=True)
+        st.success("💰 Predicted Income: **>50K** ✅")
     else:
-        st.markdown('<div class="result-box">🧾 Predicted Income: ≤50K</div>', unsafe_allow_html=True)
-
-    if confidence:
-        st.write(f"📊 Confidence: **{confidence}%**")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.warning("💵 Predicted Income: **≤50K** ❗")
 
