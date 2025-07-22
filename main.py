@@ -3,6 +3,10 @@ import pandas as pd
 import joblib
 import plotly.express as px
 from streamlit_extras.colored_header import colored_header
+from gtts import gTTS
+import base64
+import os
+from io import BytesIO
 
 st.set_page_config(page_title="💼 Salary Classifier", page_icon="💼", layout="centered")
 
@@ -78,7 +82,12 @@ labels = {
         "welcome": "Welcome",
         "enter_details": "🔍 Enter Employee Details",
         "preview": "🔍 Preview of uploaded data:",
-        "completed": "✅ Predictions completed!"
+        "completed": "✅ Predictions completed!",
+        "age": "Age",
+        "workclass": "Workclass",
+        "education": "Education",
+        "occupation": "Occupation",
+        "hours": "Hours per Week"
     },
     "Hindi": {
         "title": "💼 कर्मचारी वेतन वर्गीकरण",
@@ -89,18 +98,28 @@ labels = {
         "welcome": "स्वागत है",
         "enter_details": "🔍 कर्मचारी विवरण दर्ज करें",
         "preview": "🔍 अपलोड किए गए डेटा का पूर्वावलोकन:",
-        "completed": "✅ पूर्वानुमान पूरे हुए!"
+        "completed": "✅ पूर्वानुमान पूरे हुए!",
+        "age": "उम्र",
+        "workclass": "कार्यक्षेत्र",
+        "education": "शिक्षा",
+        "occupation": "पेशा",
+        "hours": "प्रति सप्ताह घंटे"
     },
     "Telugu": {
-        "title": "💼 ఉద్యోగి జీతం వర్గీకరణ",
-        "predict_button": "✨ జీతం అంచనా వేయండి",
-        "predicted_income": "💰 అంచన జీతం: ",
-        "upload_csv": "📁 CSV అప్లోడ్ చేయం (బల్క్ పూర్వానుమానకు కోసంది)",
-        "download_button": "⬇️ CSV డాఉన్లోడ్ చేయం",
+        "title": "💼 జీతకార్మికుల జీతం వర్గీకరణ",
+        "predict_button": "✨ జీతం అంచన వేయంది",
+        "predicted_income": "💰 అంచినీత జీతం: ",
+        "upload_csv": "📁 CSV అప్లోడ్ చేయంది (బల్క్ పూర్వానుమానకోసం)",
+        "download_button": "⬇️ CSV డౌన్లోడ్ చేయండి",
         "welcome": "స్వాగతం",
-        "enter_details": "🔍 ఉద్యోగి వివరాలు నమోదు చేయండి",
+        "enter_details": "🔍 ఉద్యోగి వివరాలు నమోది చేయండి",
         "preview": "🔍 అప్లోడ్ చేసిన డేటా ప్రివ్యూకు:",
-        "completed": "✅ అంచనాలు పూర్తయ్యాయి!"
+        "completed": "✅ అంచనాలు పూర్త్యయాయి!",
+        "age": "వయస్సు",
+        "workclass": "పని తరగతి",
+        "education": "విద్య",
+        "occupation": "ఉద్యోగం",
+        "hours": "వారం గంటలు"
     }
 }
 
@@ -111,77 +130,34 @@ st.title(labels[lang]["title"])
 # --- Single Prediction Input ---
 st.subheader(labels[lang]["enter_details"])
 
-age = st.number_input("Age", min_value=18, max_value=100)
-workclass = st.selectbox("Workclass", [
+age = st.number_input(labels[lang]["age"], min_value=18, max_value=100)
+workclass = st.selectbox(labels[lang]["workclass"], [
     "Private", "Self-emp-not-inc", "Self-emp-inc",
     "Federal-gov", "Local-gov", "State-gov", "Without-pay", "Never-worked"])
-education = st.selectbox("Education", [
+education = st.selectbox(labels[lang]["education"], [
     "Bachelors", "HS-grad", "11th", "Masters", "9th", "Some-college",
     "Assoc-acdm", "Assoc-voc", "7th-8th", "Doctorate", "Prof-school"])
-occupation = st.selectbox("Occupation", [
+occupation = st.selectbox(labels[lang]["occupation"], [
     "Tech-support", "Craft-repair", "Other-service", "Sales", "Exec-managerial",
     "Prof-specialty", "Handlers-cleaners", "Machine-op-inspct", "Adm-clerical",
     "Farming-fishing", "Transport-moving", "Priv-house-serv", "Protective-serv",
     "Armed-Forces"])
-hours_per_week = st.slider("Hours per Week", 1, 100, 40)
+hours_per_week = st.slider(labels[lang]["hours"], 1, 100, 40)
 
-if st.button(labels[lang]["predict_button"]):
-    input_data = {
-        "age": age,
-        "workclass": workclass,
-        "education": education,
-        "occupation": occupation,
-        "hours_per_week": hours_per_week
-    }
+# Voice Output Function
+def speak_text(text, lang_code='en'):
+    tts = gTTS(text=text, lang=lang_code)
+    fp = BytesIO()
+    tts.write_to_fp(fp)
+    fp.seek(0)
+    audio_bytes = fp.read()
+    b64 = base64.b64encode(audio_bytes).decode()
+    md = f"""
+        <audio autoplay>
+        <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+        </audio>
+    """
+    st.markdown(md, unsafe_allow_html=True)
 
-    input_df = pd.DataFrame([input_data])
-    encoded = pd.get_dummies(input_df)
-    encoded = encoded.reindex(columns=model_columns, fill_value=0)
-
-    prediction = model.predict(encoded)[0]
-    st.session_state.predictions.append(prediction)
-
-    st.success(labels[lang]["predicted_income"] + f"**{prediction}**")
-
-    # Show animated chart for single prediction (optional)
-    st.subheader("📊 Prediction Result Chart")
-    pred_df = pd.DataFrame({"Prediction": st.session_state.predictions})
-    pred_chart = px.bar(pred_df.value_counts().reset_index(), x="Prediction", y="count",
-                        title="Live Prediction Distribution", text="count", color="Prediction")
-    st.plotly_chart(pred_chart, use_container_width=True)
-
-# --- Show Prediction Bar Chart ---
-if st.session_state.predictions:
-    st.subheader("📊 Live Prediction Summary")
-    pred_counts = pd.Series(st.session_state.predictions).value_counts().reset_index()
-    pred_counts.columns = ["Income", "Count"]
-    bar_chart = px.bar(pred_counts, x="Income", y="Count", color="Income",
-                       title="Prediction Count by Class", text="Count")
-    st.plotly_chart(bar_chart, use_container_width=True)
-
-# --- Bulk Prediction from CSV ---
-st.subheader(labels[lang]["upload_csv"])
-uploaded_file = st.file_uploader("Upload CSV with employee records", type=["csv"])
-
-if uploaded_file:
-    df = pd.read_csv(uploaded_file)
-    st.write(labels[lang]["preview"], df.head())
-
-    df_encoded = pd.get_dummies(df)
-    df_encoded = df_encoded.reindex(columns=model_columns, fill_value=0)
-    predictions = model.predict(df_encoded)
-    df["Prediction"] = predictions
-    st.session_state.bulk_df = df
-
-    st.success(labels[lang]["completed"])
-    st.dataframe(df)
-
-    pie_chart = px.pie(df, names="education", title="Education Level Distribution")
-    pred_bar = px.bar(df["Prediction"].value_counts().reset_index(), x="index", y="Prediction",
-                      title="Prediction Counts", labels={"index": "Income"})
-
-    st.plotly_chart(pie_chart)
-    st.plotly_chart(pred_bar)
-
-    csv_download = df.to_csv(index=False).encode("utf-8")
-    st.download_button(labels[lang]["download_button"], csv_download, "predictions.csv", "text/csv")
+# Mapping language to TTS codes
+lang_map = {"English": "en", "Hindi": "hi", "Telugu": "te"}
