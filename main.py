@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# 💾 Load model and columns
+# Load model and feature columns
 @st.cache_data
 def load_model():
     model = joblib.load("best_model.pkl")
@@ -11,41 +11,36 @@ def load_model():
 
 model, model_columns = load_model()
 
-# 🌐 Page setup
-st.set_page_config(
-    page_title="Employee Salary Prediction",
-    page_icon="💼",
-    layout="centered"
-)
+# Set page config
+st.set_page_config(page_title="Employee Salary Predictor", page_icon="💼", layout="centered")
 
-# 🎨 Gradient title using markdown
-st.markdown(
-    """
-    <div style='text-align: center; padding: 10px; background: linear-gradient(to right, #4facfe, #00f2fe); border-radius: 10px;'>
-        <h1 style='color: white;'>💼 Employee Salary Classifier</h1>
-        <p style='color: white;'>Predict if income is >50K or ≤50K based on job and education details</p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# Sidebar
+with st.sidebar:
+    st.image("https://img.icons8.com/fluency/96/briefcase.png", width=80)
+    st.title("💼 Salary Predictor")
+    st.markdown("Predict whether an employee earns **>50K** or **≤50K** based on profile.")
+    st.markdown("---")
+    st.caption("Developed by [Your Name]")
 
-st.markdown("## 📝 Enter Employee Details")
+# Title & Instructions
+st.markdown("<h1 style='text-align: center; color: #4CAF50;'>Employee Salary Classification</h1>", unsafe_allow_html=True)
+st.write("Fill in the details below to predict the salary class:")
 
-# 🧾 Inputs in columns
+# Input form layout
 col1, col2 = st.columns(2)
 
 with col1:
-    age = st.number_input("🎂 Age", min_value=18, max_value=100, value=30)
-    education = st.selectbox("🎓 Education Level", [
+    age = st.number_input("🎂 Age", min_value=18, max_value=100)
+    education = st.selectbox("🎓 Education", [
         "Bachelors", "HS-grad", "11th", "Masters", "9th", "Some-college",
         "Assoc-acdm", "Assoc-voc", "7th-8th", "Doctorate", "Prof-school"
     ])
-    hours_per_week = st.slider("🕒 Weekly Working Hours", 1, 100, 40)
+    hours_per_week = st.slider("⏰ Hours/Week", 1, 100, 40)
 
 with col2:
-    workclass = st.selectbox("🏢 Workclass Type", [
-        "Private", "Self-emp-not-inc", "Self-emp-inc",
-        "Federal-gov", "Local-gov", "State-gov", "Without-pay", "Never-worked"
+    workclass = st.selectbox("🏢 Workclass", [
+        "Private", "Self-emp-not-inc", "Self-emp-inc", "Federal-gov",
+        "Local-gov", "State-gov", "Without-pay", "Never-worked"
     ])
     occupation = st.selectbox("🛠️ Occupation", [
         "Tech-support", "Craft-repair", "Other-service", "Sales", "Exec-managerial",
@@ -54,10 +49,8 @@ with col2:
         "Armed-Forces"
     ])
 
-st.markdown("---")
-
-# 🧠 Prediction logic
-if st.button("🔮 Predict Salary"):
+# Prediction
+if st.button("🔍 Predict Salary"):
     input_data = {
         "age": age,
         "workclass": workclass,
@@ -72,11 +65,28 @@ if st.button("🔮 Predict Salary"):
 
     prediction = model.predict(input_encoded)[0]
 
-    # 🎯 Display result with styling
-    if prediction == ">50K":
-        st.success("✅ **Prediction:** The employee is likely to earn more than **50K** 💰")
-    else:
-        st.warning("⚠️ **Prediction:** The employee is likely to earn **50K or less**")
+    # Optional probability
+    try:
+        proba = model.predict_proba(input_encoded)[0]
+        confidence = round(max(proba) * 100, 2)
+    except:
+        proba = None
+        confidence = None
 
-    st.markdown("---")
-    st.info("Modify the values above and click Predict again to test different employee profiles.")
+    # Display result
+    if prediction == ">50K":
+        st.success(f"💰 **Predicted Income: >50K USD**")
+    else:
+        st.info(f"🧾 **Predicted Income: ≤50K USD**")
+
+    if confidence:
+        st.write(f"📊 Confidence: `{confidence}%`")
+
+    # Optional chart
+    if proba is not None:
+        st.subheader("🔢 Probability Breakdown")
+        st.bar_chart({
+            "≤50K": [proba[0]],
+            ">50K": [proba[1]]
+        })
+
