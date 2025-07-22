@@ -4,3 +4,5 @@ scikit-learn
 joblib
 cloudpickle
 plotly
+googletrans==4.0.0-rc1
+streamlit-extras
