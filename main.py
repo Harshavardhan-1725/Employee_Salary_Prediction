@@ -2,23 +2,23 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# ✅ Load model and column names using joblib (small size + compatible)
+# ✅ Load model and column names using joblib
 @st.cache_data
 def load_model():
-    model = joblib.load("best_model.pkl")  # Load trained model
-    columns = joblib.load("model_columns.pkl")  # Load expected input columns
+    model = joblib.load("best_model.pkl")          # Trained model
+    columns = joblib.load("model_columns.pkl")     # Feature columns used in training
     return model, columns
 
-# Load model and its expected feature columns
+# Load model and expected input columns
 model, model_columns = load_model()
 
-# App UI
+# Streamlit App UI
 st.title("💼 Employee Salary Classification App")
 st.write("Predict whether an employee earns >50K or ≤50K based on input features.")
 
 st.subheader("🔎 Input Data")
 
-# User Inputs
+# Input form (unchanged)
 age = st.number_input("Age", min_value=18, max_value=100)
 workclass = st.selectbox("Workclass", [
     "Private", "Self-emp-not-inc", "Self-emp-inc",
@@ -36,7 +36,7 @@ occupation = st.selectbox("Occupation", [
 ])
 hours_per_week = st.slider("Hours per Week", 1, 100, 40)
 
-# Prediction button
+# Predict
 if st.button("Predict Salary"):
     # Prepare input
     input_data = {
@@ -49,11 +49,12 @@ if st.button("Predict Salary"):
 
     input_df = pd.DataFrame([input_data])
 
-    # One-hot encode and align with model columns
+    # One-hot encode and match training columns
     input_encoded = pd.get_dummies(input_df)
     input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
 
     # Make prediction
     prediction = model.predict(input_encoded)[0]
 
+    # Output
     st.success(f"💰 Predicted Income: **{prediction}**")
