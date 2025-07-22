@@ -6,12 +6,12 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
-import joblib
+import cloudpickle
 
-# Load dataset (you can update this path or clean the CSV manually)
+# Load dataset
 data = pd.read_csv("adult.csv")
 
-# Preprocessing steps (simplified for brevity — use your full cleaning logic here)
+# Simple preprocessing
 data = data[(data['age'] >= 17) & (data['age'] <= 75)]
 data = data.drop(columns=['education'])
 
@@ -25,6 +25,7 @@ y = data['income']
 
 X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
 
+# Train multiple models
 models = {
     "LogisticRegression": LogisticRegression(max_iter=1000),
     "RandomForest": RandomForestClassifier(),
@@ -42,7 +43,10 @@ for name, model in models.items():
     results[name] = acc
     print(f"{name}: {acc:.4f}")
 
+# Save best model using cloudpickle
 best_model_name = max(results, key=results.get)
 best_model = models[best_model_name]
-joblib.dump(best_model, "best_model.pkl")
-print(f"✅ Saved {best_model_name} model as best_model.pkl")
+with open("best_model.pkl", "wb") as f:
+    cloudpickle.dump(best_model, f)
+
+print(f"✅ Saved best model ({best_model_name}) using cloudpickle.")
