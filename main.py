@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import cloudpickle
@@ -14,6 +13,7 @@ st.set_page_config(page_title="Salary Classifier", page_icon="💼", layout="cen
 st.title("💼 Employee Salary Classification App")
 st.markdown("Predict whether an employee earns >50K or ≤50K based on input features.")
 
+# Sidebar input
 st.sidebar.header("Enter Employee Details")
 age = st.sidebar.slider("Age", 17, 75, 30)
 fnlwgt = st.sidebar.number_input("Final Weight (fnlwgt)", 10000, 1000000, 50000)
@@ -30,26 +30,26 @@ capital_gain = st.sidebar.number_input("Capital Gain", 0, 100000, 0)
 capital_loss = st.sidebar.number_input("Capital Loss", 0, 5000, 0)
 hours_per_week = st.sidebar.slider("Hours per Week", 1, 99, 40)
 
+# Encode gender
 gender_encoded = 1 if gender == "Male" else 0
 
-input_df = pd.DataFrame([
-    [
-        age,
-        workclass,
-        fnlwgt,
-        education,
-        educational_num,
-        marital_status,
-        occupation,
-        relationship,
-        race,
-        gender_encoded,
-        capital_gain,
-        capital_loss,
-        hours_per_week,
-        native_country
-    ]
-], columns=[
+# Final input features (must match training order)
+input_df = pd.DataFrame([[
+    age,
+    workclass,
+    fnlwgt,
+    education,
+    educational_num,
+    marital_status,
+    occupation,
+    relationship,
+    race,
+    gender_encoded,
+    capital_gain,
+    capital_loss,
+    hours_per_week,
+    native_country
+]], columns=[
     'age',
     'workclass',
     'fnlwgt',
@@ -69,7 +69,15 @@ input_df = pd.DataFrame([
 st.write("🔍 Input Preview:")
 st.write(input_df)
 
+# 🧪 Debug info
+st.write("📊 Input shape:", input_df.shape)
+st.write("📊 Model expects:", getattr(model, 'n_features_in_', 'Unknown'), "features")
+
+# Predict safely
 if st.button("Predict Salary Class"):
-    prediction = model.predict(input_df.values)
-    result = ">50K" if prediction[0] == 1 else "≤50K"
-    st.success(f"💡 Prediction: Employee earns {result}")
+    try:
+        prediction = model.predict(input_df.values)
+        result = ">50K" if prediction[0] == 1 else "≤50K"
+        st.success(f"💡 Prediction: Employee earns {result}")
+    except Exception as e:
+        st.error(f"❌ Error during prediction: {e}")
