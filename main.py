@@ -3,7 +3,6 @@ import pandas as pd
 import joblib
 import plotly.express as px
 from streamlit_extras.let_it_rain import rain
-from streamlit_extras.avatar import avatar
 from streamlit_extras.colored_header import colored_header
 
 st.set_page_config(page_title="💼 Salary Classifier", page_icon="💼", layout="centered")
@@ -61,7 +60,12 @@ if "bulk_df" not in st.session_state:
     st.session_state.bulk_df = pd.DataFrame()
 
 # Profile welcome
-avatar("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", size=100)
+st.markdown("""
+<div style='text-align: center;'>
+    <img src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png' width='100' style='border-radius: 50%;'/>
+</div>
+""", unsafe_allow_html=True)
+
 st.markdown("### 👋 Welcome to the Employee Salary Predictor")
 st.markdown('<div class="animated-title">🔮 Smart AI Tool to Predict Salaries</div>', unsafe_allow_html=True)
 
