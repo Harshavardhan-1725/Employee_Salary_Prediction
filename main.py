@@ -89,12 +89,12 @@ labels = {
     "Hindi": {
         "title": "💼 कर्मचारी वेतन वर्गीकरण",
         "predict_button": "✨ वेतन का अनुमान लगाएं",
-        "predicted_income": "💰 अनुमानित आय: ",
+        "predicted_income": "💰 अंकालित आय: ",
         "upload_csv": "📁 CSV अपलोड करें (थोक पूर्वानुमान के लिए)",
         "download_button": "⬇️ CSV डाउनलोड करें",
         "welcome": "स्वागत है",
         "enter_details": "🔍 कर्मचारी विवरण दर्ज करें",
-        "preview": "🔍 अपलोड किए गए डेटा का पूर्वावलोकन:",
+        "preview": "🔍 अपलोड किए गए डेटा का पूर्वदर्शन:",
         "completed": "✅ पूर्वानुमान पूरे हुए!",
         "age": "उम्र",
         "workclass": "कार्यक्षेत्र",
@@ -106,14 +106,14 @@ labels = {
         "title": "💼 ఉద్యోగి జీతం వర్గీకరణ",
         "predict_button": "✨ జీతం అంచనా",
         "predicted_income": "💰 అంచనిత జీతం: ",
-        "upload_csv": "📁 CSV అప్లోడ్ చేయండి (బల్క్ పూర్వానుమానానికి)",
+        "upload_csv": "📁 CSV అప్లోడ్ చేయం (బల్క్ పూర్వానుమానాకి)",
         "download_button": "⬇️ CSV డౌన్లోడ్ చేయండి",
         "welcome": "స్వాగతం",
-        "enter_details": "🔍 ఉద్యోగి వివరాలు నమోదు చేయండి",
-        "preview": "🔍 అప్లోడ్ చేసిన డేటా ప్రివ్యూ:",
-        "completed": "✅ అంచనాలు పూర్తయ్యాయి!",
-        "age": "వయస్సు",
-        "workclass": "వర్క్‌క్లాస్",
+        "enter_details": "🔍 ఉద్యోగి వివరాలు ఎన్టర్ చెయండి",
+        "preview": "🔍 అప్లోడ్ చేసిన డేటా ప్రీవ్యు:",
+        "completed": "✅ అంచనాలు పూర్తైని!",
+        "age": "వయస్",
+        "workclass": "వర్క్క్లాస్",
         "education": "విద్య",
         "occupation": "వృత్తి",
         "hours": "వారానికి గంటలు"
@@ -142,12 +142,13 @@ occupation = st.selectbox(labels[lang]["occupation"], [
 hours_per_week = st.slider(labels[lang]["hours"], 1, 100, 40)
 
 if st.button(labels[lang]["predict_button"]):
-    input_df = pd.DataFrame([[age, workclass, education, occupation, hours_per_week]], columns=model_columns)
-    prediction = model.predict(input_df)[0]
+    input_raw = pd.DataFrame([{"age": age, "workclass": workclass, "education": education, "occupation": occupation, "hours_per_week": hours_per_week}])
+    input_encoded = pd.get_dummies(input_raw)
+    input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
+    prediction = model.predict(input_encoded)[0]
     st.session_state.predictions.append(prediction)
     st.success(f"{labels[lang]['predicted_income']} {prediction}")
 
-    # Create a result DataFrame for charting
     result_df = pd.DataFrame({
         'Prediction': [prediction],
         'Workclass': [workclass],
@@ -156,18 +157,39 @@ if st.button(labels[lang]["predict_button"]):
         'Hours': [hours_per_week]
     })
 
-    # Bar chart
     st.plotly_chart(px.bar(result_df, x='Occupation', y='Hours', color='Prediction', title='Hours per Week by Occupation'))
-    # Pie chart
     st.plotly_chart(px.pie(result_df, names='Workclass', title='Workclass Distribution'))
-    # Histogram
     st.plotly_chart(px.histogram(result_df, x='Education', title='Education Level'))
 
-    # Download predictions
     csv = result_df.to_csv(index=False).encode('utf-8')
     st.download_button(
         label=labels[lang]["download_button"],
         data=csv,
         file_name='prediction.csv',
+        mime='text/csv'
+    )
+
+# --- Bulk Upload ---
+st.subheader(labels[lang]["upload_csv"])
+uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
+
+if uploaded_file is not None:
+    bulk_df = pd.read_csv(uploaded_file)
+    st.markdown(labels[lang]["preview"])
+    st.dataframe(bulk_df.head())
+
+    bulk_encoded = pd.get_dummies(bulk_df)
+    bulk_encoded = bulk_encoded.reindex(columns=model_columns, fill_value=0)
+    bulk_preds = model.predict(bulk_encoded)
+    bulk_df['Prediction'] = bulk_preds
+
+    st.markdown(labels[lang]["completed"])
+    st.dataframe(bulk_df)
+
+    bulk_csv = bulk_df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label=labels[lang]["download_button"],
+        data=bulk_csv,
+        file_name='bulk_predictions.csv',
         mime='text/csv'
     )
