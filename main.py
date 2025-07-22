@@ -3,10 +3,7 @@ import pandas as pd
 import joblib
 import plotly.express as px
 from streamlit_extras.colored_header import colored_header
-from gtts import gTTS
-import base64
 import os
-from io import BytesIO
 
 st.set_page_config(page_title="💼 Salary Classifier", page_icon="💼", layout="centered")
 
@@ -92,7 +89,7 @@ labels = {
     "Hindi": {
         "title": "💼 कर्मचारी वेतन वर्गीकरण",
         "predict_button": "✨ वेतन का अंकान लगाएं",
-        "predicted_income": "💰 अंकानित आय: ",
+        "predicted_income": "💰 अंकांकित आय: ",
         "upload_csv": "📁 CSV अपलोड करें (थोक पूर्वानुमान के लिए)",
         "download_button": "⬇️ CSV डाउनलोड करें",
         "welcome": "स्वागत है",
@@ -110,10 +107,10 @@ labels = {
         "predict_button": "✨ జీతం అంచన వేయంది",
         "predicted_income": "💰 అంచినీత జీతం: ",
         "upload_csv": "📁 CSV అప్లోడ్ చేయంది (బల్క్ పూర్వానుమానకోసం)",
-        "download_button": "⬇️ CSV డౌన్లోడ్ చేయండి",
+        "download_button": "⬇️ CSV డౌన్లోడ్ చేయంది",
         "welcome": "స్వాగతం",
         "enter_details": "🔍 ఉద్యోగి వివరాలు నమోది చేయండి",
-        "preview": "🔍 అప్లోడ్ చేసిన డేటా ప్రివ్యూకు:",
+        "preview": "🔍 అప్లోడ్ చేసిన డేటా ప్రివ్యుకు:",
         "completed": "✅ అంచనాలు పూర్త్యయాయి!",
         "age": "వయస్సు",
         "workclass": "పని తరగతి",
@@ -143,21 +140,3 @@ occupation = st.selectbox(labels[lang]["occupation"], [
     "Farming-fishing", "Transport-moving", "Priv-house-serv", "Protective-serv",
     "Armed-Forces"])
 hours_per_week = st.slider(labels[lang]["hours"], 1, 100, 40)
-
-# Voice Output Function
-def speak_text(text, lang_code='en'):
-    tts = gTTS(text=text, lang=lang_code)
-    fp = BytesIO()
-    tts.write_to_fp(fp)
-    fp.seek(0)
-    audio_bytes = fp.read()
-    b64 = base64.b64encode(audio_bytes).decode()
-    md = f"""
-        <audio autoplay>
-        <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-        </audio>
-    """
-    st.markdown(md, unsafe_allow_html=True)
-
-# Mapping language to TTS codes
-lang_map = {"English": "en", "Hindi": "hi", "Telugu": "te"}
