@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import cloudpickle
 
-# ✅ Load the model
+# ✅ Load trained model
 @st.cache_resource
 def load_model():
     with open("best_model.pkl", "rb") as f:
@@ -10,47 +10,43 @@ def load_model():
 
 model = load_model()
 
-# ✅ Streamlit App Setup
-st.set_page_config(page_title="Employee Salary Classification", page_icon="💼", layout="centered")
+st.set_page_config(page_title="Salary Classifier", page_icon="💼", layout="centered")
 st.title("💼 Employee Salary Classification App")
 st.markdown("Predict whether an employee earns >50K or ≤50K based on input features.")
 
-# ✅ Sidebar inputs
-st.sidebar.header("Input Employee Details")
-age = st.sidebar.slider("Age", 18, 65, 30)
-educational_num = st.sidebar.slider("Educational Number (5 to 16)", 5, 16, 10)
-workclass = st.sidebar.slider("Workclass (Encoded)", 0, 6, 2)
+# ✅ Input from sidebar
+st.sidebar.header("Enter Employee Details")
+age = st.sidebar.slider("Age", 17, 75, 30)
+educational_num = st.sidebar.slider("Education Number", 1, 16, 10)
+workclass = st.sidebar.slider("Workclass (Encoded)", 0, 8, 3)
 occupation = st.sidebar.slider("Occupation (Encoded)", 0, 13, 4)
 relationship = st.sidebar.slider("Relationship (Encoded)", 0, 5, 2)
 gender = st.sidebar.selectbox("Gender", ["Male", "Female"])
-hours_per_week = st.sidebar.slider("Hours per week", 1, 80, 40)
 race = st.sidebar.slider("Race (Encoded)", 0, 4, 1)
 native_country = st.sidebar.slider("Native Country (Encoded)", 0, 40, 10)
-marital_status = st.sidebar.slider("Marital Status (Encoded)", 0, 3, 1)
-capital_gain = st.sidebar.number_input("Capital Gain", 0, 99999, 0)
-capital_loss = st.sidebar.number_input("Capital Loss", 0, 99999, 0)
+marital_status = st.sidebar.slider("Marital Status (Encoded)", 0, 6, 2)
+capital_gain = st.sidebar.number_input("Capital Gain", 0, 100000, 0)
+capital_loss = st.sidebar.number_input("Capital Loss", 0, 5000, 0)
+hours_per_week = st.sidebar.slider("Hours per Week", 1, 99, 40)
 
-# ✅ Encode gender
+# ✅ Gender encoding
 gender_encoded = 1 if gender == "Male" else 0
 
-# ✅ Create input DataFrame
-input_df = pd.DataFrame({
-    'age': [age],
-    'workclass': [workclass],
-    'marital-status': [marital_status],
-    'occupation': [occupation],
-    'relationship': [relationship],
-    'race': [race],
-    'gender': [gender_encoded],
-    'capital-gain': [capital_gain],
-    'capital-loss': [capital_loss],
-    'hours-per-week': [hours_per_week],
-    'native-country': [native_country],
-    'educational-num': [educational_num]
-})
-
-# ✅ Match expected column order
-expected_cols = [
+# ✅ Input DataFrame (must match trained model)
+input_df = pd.DataFrame([[
+    age,
+    workclass,
+    marital_status,
+    occupation,
+    relationship,
+    race,
+    gender_encoded,
+    capital_gain,
+    capital_loss,
+    hours_per_week,
+    native_country,
+    educational_num
+]], columns=[
     'age',
     'workclass',
     'marital-status',
@@ -63,32 +59,13 @@ expected_cols = [
     'hours-per-week',
     'native-country',
     'educational-num'
-]
-input_df = input_df[expected_cols]
+])
 
-# ✅ Show input
-st.write("### 🔎 Input Data")
+st.write("🔍 Input Preview:")
 st.write(input_df)
 
-# ✅ Predict
+# ✅ Prediction button
 if st.button("Predict Salary Class"):
-    prediction = model.predict(input_df.values)  # ⚠️ Use .values to avoid feature name error
+    prediction = model.predict(input_df)  # Model expects these 13 features
     result = ">50K" if prediction[0] == 1 else "≤50K"
-    st.success(f"✅ Prediction: Employee earns {result}")
-
-# ✅ Batch Prediction
-st.markdown("---")
-st.markdown("#### 📂 Batch Prediction")
-uploaded_file = st.file_uploader("Upload a CSV file for batch prediction", type="csv")
-
-if uploaded_file is not None:
-    batch_data = pd.read_csv(uploaded_file)
-    batch_data = batch_data[expected_cols]
-    batch_preds = model.predict(batch_data.values)  # ⚠️ Use .values here too
-    batch_data['PredictedClass'] = [">50K" if pred == 1 else "≤50K" for pred in batch_preds]
-
-    st.write("✅ Predictions:")
-    st.write(batch_data.head())
-
-    csv = batch_data.to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Download Predictions CSV", csv, file_name='predicted_classes.csv', mime='text/csv')
+    st.success(f"💡 Prediction: Employee earns {result}")
