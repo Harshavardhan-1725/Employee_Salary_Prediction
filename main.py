@@ -3,9 +3,7 @@ import pandas as pd
 import joblib
 import plotly.express as px
 from streamlit_extras.let_it_rain import rain
-from streamlit_extras.animated_headline import animated_headline
 from streamlit_extras.avatar import avatar
-from streamlit_extras.switch_page_button import switch_page
 from streamlit_extras.colored_header import colored_header
 from googletrans import Translator
 
@@ -31,6 +29,20 @@ st.markdown("""
     .stButton>button:hover {
         background-color: #45a049;
     }
+    .animated-title {
+        font-size: 30px;
+        color: #333;
+        animation: glow 2s ease-in-out infinite alternate;
+        text-align: center;
+    }
+    @keyframes glow {
+        from {
+            text-shadow: 0 0 10px #4CAF50;
+        }
+        to {
+            text-shadow: 0 0 20px #45a049, 0 0 30px #45a049;
+        }
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -53,7 +65,7 @@ if "bulk_df" not in st.session_state:
 # Profile welcome
 avatar(name="👩‍💼", size=100)
 st.markdown("### 👋 Welcome to the Employee Salary Predictor")
-animated_headline("🔮 Smart AI Tool to Predict Salaries")
+st.markdown('<div class="animated-title">🔮 Smart AI Tool to Predict Salaries</div>', unsafe_allow_html=True)
 
 # Language selection
 lang = st.selectbox("🌐 Choose Language", ["English", "Hindi", "Telugu"])
@@ -123,6 +135,13 @@ if st.button(labels[lang]["predict_button"]):
 
     rain(emoji="💸", font_size=30, falling_speed=5, animation_length="infinite")
     st.success(labels[lang]["predicted_income"] + f"**{prediction}**")
+
+    # Show animated chart for single prediction (optional)
+    st.subheader("📊 Prediction Result Chart")
+    pred_df = pd.DataFrame({"Prediction": st.session_state.predictions})
+    pred_chart = px.bar(pred_df.value_counts().reset_index(), x="Prediction", y="count",
+                        title="Live Prediction Distribution", text="count", color="Prediction")
+    st.plotly_chart(pred_chart, use_container_width=True)
 
 # --- Show Prediction Bar Chart ---
 if st.session_state.predictions:
