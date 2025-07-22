@@ -88,8 +88,8 @@ labels = {
     },
     "Hindi": {
         "title": "💼 कर्मचारी वेतन वर्गीकरण",
-        "predict_button": "✨ वेतन का अंकान लगाएं",
-        "predicted_income": "💰 अंकांकित आय: ",
+        "predict_button": "✨ वेतन का अनुमान लगाएं",
+        "predicted_income": "💰 अनुमानित आय: ",
         "upload_csv": "📁 CSV अपलोड करें (थोक पूर्वानुमान के लिए)",
         "download_button": "⬇️ CSV डाउनलोड करें",
         "welcome": "स्वागत है",
@@ -103,20 +103,20 @@ labels = {
         "hours": "प्रति सप्ताह घंटे"
     },
     "Telugu": {
-        "title": "💼 జీతకార్మికుల జీతం వర్గీకరణ",
-        "predict_button": "✨ జీతం అంచన వేయంది",
-        "predicted_income": "💰 అంచినీత జీతం: ",
-        "upload_csv": "📁 CSV అప్లోడ్ చేయంది (బల్క్ పూర్వానుమానకోసం)",
-        "download_button": "⬇️ CSV డౌన్లోడ్ చేయంది",
+        "title": "💼 ఉద్యోగి జీతం వర్గీకరణ",
+        "predict_button": "✨ జీతం అంచనా",
+        "predicted_income": "💰 అంచనిత జీతం: ",
+        "upload_csv": "📁 CSV అప్లోడ్ చేయండి (బల్క్ పూర్వానుమానానికి)",
+        "download_button": "⬇️ CSV డౌన్లోడ్ చేయండి",
         "welcome": "స్వాగతం",
-        "enter_details": "🔍 ఉద్యోగి వివరాలు నమోది చేయండి",
-        "preview": "🔍 అప్లోడ్ చేసిన డేటా ప్రివ్యుకు:",
-        "completed": "✅ అంచనాలు పూర్త్యయాయి!",
+        "enter_details": "🔍 ఉద్యోగి వివరాలు నమోదు చేయండి",
+        "preview": "🔍 అప్లోడ్ చేసిన డేటా ప్రివ్యూ:",
+        "completed": "✅ అంచనాలు పూర్తయ్యాయి!",
         "age": "వయస్సు",
-        "workclass": "పని తరగతి",
+        "workclass": "వర్క్‌క్లాస్",
         "education": "విద్య",
-        "occupation": "ఉద్యోగం",
-        "hours": "వారం గంటలు"
+        "occupation": "వృత్తి",
+        "hours": "వారానికి గంటలు"
     }
 }
 
@@ -140,3 +140,34 @@ occupation = st.selectbox(labels[lang]["occupation"], [
     "Farming-fishing", "Transport-moving", "Priv-house-serv", "Protective-serv",
     "Armed-Forces"])
 hours_per_week = st.slider(labels[lang]["hours"], 1, 100, 40)
+
+if st.button(labels[lang]["predict_button"]):
+    input_df = pd.DataFrame([[age, workclass, education, occupation, hours_per_week]], columns=model_columns)
+    prediction = model.predict(input_df)[0]
+    st.session_state.predictions.append(prediction)
+    st.success(f"{labels[lang]['predicted_income']} {prediction}")
+
+    # Create a result DataFrame for charting
+    result_df = pd.DataFrame({
+        'Prediction': [prediction],
+        'Workclass': [workclass],
+        'Education': [education],
+        'Occupation': [occupation],
+        'Hours': [hours_per_week]
+    })
+
+    # Bar chart
+    st.plotly_chart(px.bar(result_df, x='Occupation', y='Hours', color='Prediction', title='Hours per Week by Occupation'))
+    # Pie chart
+    st.plotly_chart(px.pie(result_df, names='Workclass', title='Workclass Distribution'))
+    # Histogram
+    st.plotly_chart(px.histogram(result_df, x='Education', title='Education Level'))
+
+    # Download predictions
+    csv = result_df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label=labels[lang]["download_button"],
+        data=csv,
+        file_name='prediction.csv',
+        mime='text/csv'
+    )
