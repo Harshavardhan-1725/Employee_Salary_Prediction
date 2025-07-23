@@ -1,62 +1,149 @@
-# Everything else remains same up to this line...
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import pickle
+from io import BytesIO
+from streamlit_extras.avatar import avatar
 
-# Manual Form Input
-st.subheader("🔎 Manual Input")
-age = st.number_input(lang["age"], 18, 100)
-workclass = st.selectbox(lang["workclass"], [...])
-education = st.selectbox(lang["education"], [...])
-occupation = st.selectbox(lang["occupation"], [...])
-hours_per_week = st.slider(lang["hours"], 1, 100, 40)
+# Load model
+model = pickle.load(open("best_model.pkl", "rb"))
+model_columns = pickle.load(open("model_columns.pkl", "rb"))
 
-predict_clicked = st.button(lang["predict"])  # SINGLE button
+# Translations
+def get_translations(lang):
+    return {
+        "en": {
+            "title": "Employee Salary Classification",
+            "age": "Age",
+            "workclass": "Workclass",
+            "education": "Education",
+            "occupation": "Occupation",
+            "hours": "Hours per Week",
+            "predict": "🎯 Predict Salary",
+            "predicted_income": "Predicted Income",
+            "upload_csv": "Upload CSV for Bulk Predictions",
+            "download": "⬇️ Download Results",
+        },
+        "hi": {
+            "title": "कर्मचारी वेतन वर्गीकरण",
+            "age": "आयु",
+            "workclass": "कार्य वर्ग",
+            "education": "शिक्षा",
+            "occupation": "पेशा",
+            "hours": "प्रति सप्ताह घंटे",
+            "predict": "🎯 वेतन का पूर्वानुमान करें",
+            "predicted_income": "अनुमानित आय",
+            "upload_csv": "CSV अपलोड करें (थोक भविष्यवाणी)",
+            "download": "⬇️ परिणाम डाउनलोड करें",
+        },
+        "te": {
+            "title": "ఉద్యోగి జీతం వర్గీకరణ",
+            "age": "వయస్సు",
+            "workclass": "పని తరగతి",
+            "education": "విద్య",
+            "occupation": "ఉద్యోగం",
+            "hours": "వారం గంటలు",
+            "predict": "🎯 జీతాన్ని ఊహించండి",
+            "predicted_income": "అంచనా జీతం",
+            "upload_csv": "CSV అప్లోడ్ (బల్క్ ప్రిడిక్షన్)",
+            "download": "⬇️ ఫలితాలను డౌన్‌లోడ్ చేయండి",
+        }
+    }.get(lang, {})
 
-if predict_clicked:
-    input_data = {
-        "age": age,
-        "workclass": workclass,
-        "education": education,
-        "occupation": occupation,
-        "hours_per_week": hours_per_week
+# Sidebar Language Selection
+lang_choice = st.sidebar.selectbox("🌐 Select Language / भाषा / భాష", ["en", "hi", "te"], format_func=lambda x: {"en": "English", "hi": "Hindi", "te": "Telugu"}[x])
+lang = get_translations(lang_choice)
+
+# Avatar and Title
+avatar("user")
+st.markdown("<h1 style='text-align:center; color:#2196F3;'>AI-Powered Salary Predictor 💼</h1>", unsafe_allow_html=True)
+
+# Button CSS
+st.markdown("""
+    <style>
+    .stButton > button {
+        background: linear-gradient(to right, #2196F3, #21CBF3);
+        color: white;
+        font-weight: bold;
+        border-radius: 10px;
+        padding: 10px 24px;
+        transition: 0.3s ease-in-out;
+        margin-top: 10px;
     }
-    input_df = pd.DataFrame([input_data])
-    input_encoded = pd.get_dummies(input_df)
-    input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
+    .stButton > button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-    prediction = model.predict(input_encoded)[0]
-    st.success(f"{lang['predicted_income']}: **{prediction}**")
+# Tabs for Manual and Bulk
+manual_tab, upload_tab = st.tabs(["📋 Manual Input", "📁 Bulk Upload"])
 
-    st.subheader("📊 Visual Insights from Input Data")
-    fig_pie = px.pie(input_df, names='workclass', title="Workclass Distribution", color_discrete_sequence=['#2196F3'])
-    fig_pie.update_traces(textinfo='percent+label', pull=[0.05])
-    fig_pie.update_layout(template='plotly_white')
-    st.plotly_chart(fig_pie, use_container_width=True)
+# Manual Input Tab
+with manual_tab:
+    st.subheader("🔎 Manual Input")
+    age = st.number_input(lang["age"], 18, 100)
+    workclass = st.selectbox(lang["workclass"], ["Private 🏢", "Self-emp 🔧", "Government 🏛️"])
+    education = st.selectbox(lang["education"], ["Bachelors 🎓", "HS-grad 🏫", "Masters 🎓"])
+    occupation = st.selectbox(lang["occupation"], ["Tech-support 💻", "Craft-repair 🔨", "Sales 💼"])
+    hours_per_week = st.slider(lang["hours"], 1, 100, 40)
 
-    fig_bar = px.bar(input_df, x='occupation', y='hours_per_week', color='occupation', title="Occupation vs Hours per Week", color_discrete_sequence=['#2196F3'])
-    fig_bar.update_layout(xaxis_tickangle=-45, template='plotly_white')
-    st.plotly_chart(fig_bar, use_container_width=True)
+    if st.button(lang["predict"]):
+        input_data = {
+            "age": age,
+            "workclass": workclass.split(" ")[0],
+            "education": education.split(" ")[0],
+            "occupation": occupation.split(" ")[0],
+            "hours_per_week": hours_per_week
+        }
+        input_df = pd.DataFrame([input_data])
+        input_encoded = pd.get_dummies(input_df)
+        input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
 
-    fig_hist = px.histogram(input_df, x='age', nbins=10, title="Age Distribution of Employees", color_discrete_sequence=['#2196F3'])
-    fig_hist.update_layout(template='plotly_white')
-    st.plotly_chart(fig_hist, use_container_width=True)
+        prediction = model.predict(input_encoded)[0]
+        st.success(f"{lang['predicted_income']}: **{prediction}**")
 
-# --- CSV Upload for Bulk Predictions ---
-st.markdown("---")
-st.subheader(f"📁 {lang['upload_csv']}")
-uploaded_file = st.file_uploader("", type=["csv"])
+        st.subheader("📊 Visual Insights")
+        st.plotly_chart(
+            px.pie(input_df, names='workclass', title="Workclass Distribution", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'),
+            use_container_width=True
+        )
+        st.plotly_chart(
+            px.bar(input_df, x='occupation', y='hours_per_week', title="Occupation vs Hours", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'),
+            use_container_width=True
+        )
+        st.plotly_chart(
+            px.histogram(input_df, x='age', nbins=10, title="Age Distribution", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'),
+            use_container_width=True
+        )
 
-if uploaded_file:
-    df = pd.read_csv(uploaded_file)
-    df_encoded = pd.get_dummies(df)
-    df_encoded = df_encoded.reindex(columns=model_columns, fill_value=0)
-    predictions = model.predict(df_encoded)
-    df['Prediction'] = predictions
+# Bulk Upload Tab (at Bottom)
+with upload_tab:
+    st.subheader(f"📁 {lang['upload_csv']}")
+    uploaded_file = st.file_uploader("", type=["csv"])
 
-    st.success("✅ Predictions done for uploaded data")
-    st.dataframe(df)
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        df_encoded = pd.get_dummies(df)
+        df_encoded = df_encoded.reindex(columns=model_columns, fill_value=0)
+        predictions = model.predict(df_encoded)
+        df['Prediction'] = predictions
 
-    st.subheader("📊 Charts from Bulk Data")
-    # same charts for bulk data...
+        st.success("✅ Predictions completed")
+        st.dataframe(df)
 
-    output = BytesIO()
-    df.to_csv(output, index=False)
-    st.download_button(label=lang["download"], data=output.getvalue(), file_name="predicted_results.csv", mime="text/csv")
+        st.subheader("📊 Charts from Bulk Data")
+        st.plotly_chart(
+            px.histogram(df, x='age', nbins=10, title="Age Distribution", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'),
+            use_container_width=True
+        )
+        if 'occupation' in df:
+            st.plotly_chart(
+                px.bar(df, x='occupation', color='occupation', title="Occupation Count", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'),
+                use_container_width=True
+            )
+
+        output = BytesIO()
+        df.to_csv(output, index=False)
+        st.download_button(label=lang["download"], data=output.getvalue(), file_name="predicted_results.csv", mime="text/csv")
