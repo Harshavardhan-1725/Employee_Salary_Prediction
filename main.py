@@ -53,13 +53,18 @@ def get_translations(lang):
     }
     return translations.get(lang, translations["en"])
 
-# Header with larger icon
+# Attractive Header with Icon and Subtitle
 st.markdown('<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">', unsafe_allow_html=True)
 col1, col2 = st.columns([1, 8])
 with col1:
-    st.markdown('<i class="fas fa-user-circle fa-4x" style="color:#2196F3;"></i>', unsafe_allow_html=True)
+    st.markdown('<i class="fas fa-robot fa-5x" style="color:#4CAF50;"></i>', unsafe_allow_html=True)
 with col2:
-    st.markdown("<h1 style='color:#2196F3; font-size: 40px;'>AI-Powered Salary Predictor 💼</h1>", unsafe_allow_html=True)
+    st.markdown("""
+        <div style='margin-top: 10px;'>
+            <h1 style='color:#2E86C1; font-size: 50px; margin-bottom: 5px;'>AI-Powered Salary Predictor 💼</h1>
+            <p style='color:#555; font-size: 20px;'>Empower your decisions with AI</p>
+        </div>
+    """, unsafe_allow_html=True)
 
 # Language selection below heading
 lang_choice = st.selectbox("🌐 Select Language / भाषा / భాష", ["en", "hi", "te"], format_func=lambda x: {"en": "English", "hi": "Hindi", "te": "Telugu"}[x])
