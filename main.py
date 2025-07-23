@@ -14,6 +14,7 @@ def get_translations(lang):
         "en": {
             "title": "Employee Salary Classification",
             "age": "Age",
+            "gender": "Gender",
             "workclass": "Workclass",
             "education": "Education",
             "occupation": "Occupation",
@@ -26,6 +27,7 @@ def get_translations(lang):
         "hi": {
             "title": "कर्मचारी वेतन वर्गीकरण",
             "age": "आयु",
+            "gender": "लिंग",
             "workclass": "कार्य वर्ग",
             "education": "शिक्षा",
             "occupation": "पेशा",
@@ -38,6 +40,7 @@ def get_translations(lang):
         "te": {
             "title": "ఉద్యోగి జీతం వర్గీకరణ",
             "age": "వయస్సు",
+            "gender": "లింగం",
             "workclass": "పని తరగతి",
             "education": "విద్య",
             "occupation": "ఉద్యోగం",
@@ -88,6 +91,7 @@ manual_tab, upload_tab = st.tabs(["📋 Manual Input", "📁 Bulk Upload"])
 with manual_tab:
     st.subheader("🔎 Manual Input")
     age = st.number_input(lang["age"], 18, 100)
+    gender = st.selectbox(lang["gender"], ["Male ♂️", "Female ♀️"])
     workclass = st.selectbox(lang["workclass"], ["Private 🏢", "Self-emp 🔧", "Government 🏛️"])
     education = st.selectbox(lang["education"], ["Bachelors 🎓", "HS-grad 🏫", "Masters 🎓"])
     occupation = st.selectbox(lang["occupation"], ["Tech-support 💻", "Craft-repair 🔨", "Sales 💼"])
@@ -96,6 +100,7 @@ with manual_tab:
     if st.button(lang["predict"]):
         input_data = {
             "age": age,
+            "gender": gender.split(" ")[0],
             "workclass": workclass.split(" ")[0],
             "education": education.split(" ")[0],
             "occupation": occupation.split(" ")[0],
@@ -109,10 +114,11 @@ with manual_tab:
         st.success(f"{lang['predicted_income']}: **{prediction}**")
 
         # Download single result
-        result_csv = f"age,workclass,education,occupation,hours_per_week,prediction\n{age},{workclass},{education},{occupation},{hours_per_week},{prediction}"
+        result_csv = input_df.copy()
+        result_csv["prediction"] = prediction
         st.download_button(
             label="⬇️ Download This Result",
-            data=result_csv,
+            data=result_csv.to_csv(index=False),
             file_name="single_prediction.csv",
             mime="text/csv"
         )
