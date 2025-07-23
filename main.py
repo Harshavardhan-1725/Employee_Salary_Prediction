@@ -67,19 +67,21 @@ st.markdown("""
         animation: fadeInUp 1s ease-out;
     }
     .header-icon {
-        font-size: 70px;
+        font-size: 80px;
         color: #4CAF50;
         margin-right: 20px;
     }
     .header-text h1 {
         color: #2E86C1;
-        font-size: 50px;
+        font-size: 48px;
         margin: 0;
+        animation: fadeInUp 1.2s ease-out;
     }
     .header-text p {
         color: #555;
         font-size: 22px;
         margin-top: 5px;
+        animation: fadeInUp 1.4s ease-out;
     }
     </style>
     <div class='header-container'>
