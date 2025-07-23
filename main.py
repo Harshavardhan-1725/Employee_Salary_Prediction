@@ -50,11 +50,11 @@ def get_translations(lang):
     }
     return translations.get(lang, translations["en"])
 
-# Header with icon instead of avatar
+# Header with larger icon
 st.markdown('<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">', unsafe_allow_html=True)
 col1, col2 = st.columns([1, 8])
 with col1:
-    st.markdown('<i class="fas fa-user-circle fa-2x" style="color:#2196F3;"></i>', unsafe_allow_html=True)
+    st.markdown('<i class="fas fa-user-circle fa-4x" style="color:#2196F3;"></i>', unsafe_allow_html=True)
 with col2:
     st.markdown("<h1 style='color:#2196F3; font-size: 40px;'>AI-Powered Salary Predictor 💼</h1>", unsafe_allow_html=True)
 
