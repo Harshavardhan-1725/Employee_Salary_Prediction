@@ -1,14 +1,14 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import joblib
+import pickle  # <-- Changed from joblib
 from io import BytesIO
 from streamlit_extras.avatar import avatar
 from streamlit_option_menu import option_menu
 from streamlit_extras.switch_page_button import switch_page
 
 # Load model and columns
-model = joblib.load("best_model.joblib")
+model = pickle.load(open("best_model.pkl", "rb"))  # <-- Updated to use pickle
 model_columns = pickle.load(open("model_columns.pkl", "rb"))
 
 # Language support
