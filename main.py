@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.express as px
 import pickle
 from io import BytesIO
-from streamlit_extras.animated_headline import animated_headline
 from streamlit_extras.avatar import avatar
 from streamlit_option_menu import option_menu
 from streamlit_extras.switch_page_button import switch_page
@@ -59,20 +58,21 @@ lang = get_translations(lang_choice)
 
 # Avatar and animated header
 avatar("user")
-animated_headline("AI-Powered Salary Predictor 💼")
+st.markdown("<h1 style='text-align:center; color:#2196F3;'>AI-Powered Salary Predictor 💼</h1>", unsafe_allow_html=True)
 
-# CSS for animated button
+# CSS for animated Predict Salary button
 st.markdown("""
     <style>
-    .css-1emrehy button {
+    .stButton>button {
         background: linear-gradient(to right, #2196F3, #21CBF3);
         color: white;
         font-weight: bold;
         border-radius: 10px;
         padding: 10px 24px;
         transition: all 0.3s ease-in-out;
+        margin-top: 10px;
     }
-    .css-1emrehy button:hover {
+    .stButton>button:hover {
         transform: scale(1.05);
         box-shadow: 0px 0px 8px rgba(0,0,0,0.2);
     }
@@ -80,58 +80,57 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Tabs Layout
-with st.tabs(["📋 Manual Input", "📁 Bulk Upload"]):
-    # --- Manual Input Tab ---
-    with st.container():
-        st.subheader("🔎 Manual Input")
-        age = st.number_input(lang["age"], 18, 100)
-        workclass = st.selectbox(lang["workclass"], ["Private 🏢", "Self-emp 🔧", "Government 🏛️"])
-        education = st.selectbox(lang["education"], ["Bachelors 🎓", "HS-grad 🏫", "Masters 🎓"])
-        occupation = st.selectbox(lang["occupation"], ["Tech-support 💻", "Craft-repair 🔨", "Sales 💼"])
-        hours_per_week = st.slider(lang["hours"], 1, 100, 40)
+manual_tab, upload_tab = st.tabs(["📋 Manual Input", "📁 Bulk Upload"])
 
-        predict_clicked = st.button(lang["predict"])
+# --- Manual Input Tab ---
+with manual_tab:
+    st.subheader("🔎 Manual Input")
+    age = st.number_input(lang["age"], 18, 100)
+    workclass = st.selectbox(lang["workclass"], ["Private 🏢", "Self-emp 🔧", "Government 🏛️"])
+    education = st.selectbox(lang["education"], ["Bachelors 🎓", "HS-grad 🏫", "Masters 🎓"])
+    occupation = st.selectbox(lang["occupation"], ["Tech-support 💻", "Craft-repair 🔨", "Sales 💼"])
+    hours_per_week = st.slider(lang["hours"], 1, 100, 40)
 
-        if predict_clicked:
-            input_data = {
-                "age": age,
-                "workclass": workclass.split(" ")[0],
-                "education": education.split(" ")[0],
-                "occupation": occupation.split(" ")[0],
-                "hours_per_week": hours_per_week
-            }
-            input_df = pd.DataFrame([input_data])
-            input_encoded = pd.get_dummies(input_df)
-            input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
+    if st.button(lang["predict"]):
+        input_data = {
+            "age": age,
+            "workclass": workclass.split(" ")[0],
+            "education": education.split(" ")[0],
+            "occupation": occupation.split(" ")[0],
+            "hours_per_week": hours_per_week
+        }
+        input_df = pd.DataFrame([input_data])
+        input_encoded = pd.get_dummies(input_df)
+        input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
 
-            prediction = model.predict(input_encoded)[0]
-            st.success(f"{lang['predicted_income']}: **{prediction}**")
+        prediction = model.predict(input_encoded)[0]
+        st.success(f"{lang['predicted_income']}: **{prediction}**")
 
-            st.subheader("📊 Visual Insights")
-            st.plotly_chart(px.pie(input_df, names='workclass', title="Workclass Distribution", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'), use_container_width=True)
-            st.plotly_chart(px.bar(input_df, x='occupation', y='hours_per_week', title="Occupation vs Hours", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'), use_container_width=True)
-            st.plotly_chart(px.histogram(input_df, x='age', nbins=10, title="Age Distribution", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'), use_container_width=True)
+        st.subheader("📊 Visual Insights")
+        st.plotly_chart(px.pie(input_df, names='workclass', title="Workclass Distribution", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'), use_container_width=True)
+        st.plotly_chart(px.bar(input_df, x='occupation', y='hours_per_week', title="Occupation vs Hours", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'), use_container_width=True)
+        st.plotly_chart(px.histogram(input_df, x='age', nbins=10, title="Age Distribution", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'), use_container_width=True)
 
-    # --- Bulk Upload Tab ---
-    with st.container():
-        st.subheader(f"📁 {lang['upload_csv']}")
-        uploaded_file = st.file_uploader("", type=["csv"])
+# --- Bulk Upload Tab ---
+with upload_tab:
+    st.subheader(f"📁 {lang['upload_csv']}")
+    uploaded_file = st.file_uploader("", type=["csv"])
 
-        if uploaded_file:
-            df = pd.read_csv(uploaded_file)
-            df_encoded = pd.get_dummies(df)
-            df_encoded = df_encoded.reindex(columns=model_columns, fill_value=0)
-            predictions = model.predict(df_encoded)
-            df['Prediction'] = predictions
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        df_encoded = pd.get_dummies(df)
+        df_encoded = df_encoded.reindex(columns=model_columns, fill_value=0)
+        predictions = model.predict(df_encoded)
+        df['Prediction'] = predictions
 
-            st.success("✅ Predictions completed")
-            st.dataframe(df)
+        st.success("✅ Predictions completed")
+        st.dataframe(df)
 
-            st.subheader("📊 Charts from Bulk Data")
-            st.plotly_chart(px.histogram(df, x='age', nbins=10, title="Age Distribution", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'), use_container_width=True)
-            if 'occupation' in df:
-                st.plotly_chart(px.bar(df, x='occupation', color='occupation', title="Occupation Count", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'), use_container_width=True)
+        st.subheader("📊 Charts from Bulk Data")
+        st.plotly_chart(px.histogram(df, x='age', nbins=10, title="Age Distribution", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'), use_container_width=True)
+        if 'occupation' in df:
+            st.plotly_chart(px.bar(df, x='occupation', color='occupation', title="Occupation Count", color_discrete_sequence=['#2196F3']).update_layout(template='plotly_white'), use_container_width=True)
 
-            output = BytesIO()
-            df.to_csv(output, index=False)
-            st.download_button(label=lang["download"], data=output.getvalue(), file_name="predicted_results.csv", mime="text/csv")
+        output = BytesIO()
+        df.to_csv(output, index=False)
+        st.download_button(label=lang["download"], data=output.getvalue(), file_name="predicted_results.csv", mime="text/csv")
