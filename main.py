@@ -61,6 +61,7 @@ language = st.sidebar.selectbox("🌐 Select Language", list(LANGUAGES.keys()))
 lang = LANGUAGES[language]
 
 # UI
+st.set_page_config(layout="wide")
 st.title(lang["title"])
 st.write(lang["intro"])
 st.markdown("---")
@@ -81,15 +82,18 @@ if uploaded_file:
     st.subheader("📊 Charts from Bulk Data")
 
     if 'workclass' in df.columns:
-        fig_pie = px.pie(df, names='workclass', title="Workclass Distribution", color_discrete_sequence=px.colors.qualitative.Set3)
+        fig_pie = px.pie(df, names='workclass', title="Workclass Distribution", color_discrete_sequence=['#2196F3'])
+        fig_pie.update_layout(template='plotly_white')
         st.plotly_chart(fig_pie, use_container_width=True)
 
     if 'occupation' in df.columns and 'hours_per_week' in df.columns:
-        fig_bar = px.bar(df, x='occupation', y='hours_per_week', title="Occupation vs Hours per Week", color='occupation', color_discrete_sequence=px.colors.qualitative.Vivid)
+        fig_bar = px.bar(df, x='occupation', y='hours_per_week', title="Occupation vs Hours per Week", color='occupation', color_discrete_sequence=['#2196F3'])
+        fig_bar.update_layout(template='plotly_white', xaxis_tickangle=-45)
         st.plotly_chart(fig_bar, use_container_width=True)
 
     if 'age' in df.columns:
-        fig_hist = px.histogram(df, x='age', nbins=10, title="Age Distribution", color_discrete_sequence=['#E91E63'])
+        fig_hist = px.histogram(df, x='age', nbins=10, title="Age Distribution", color_discrete_sequence=['#2196F3'])
+        fig_hist.update_layout(template='plotly_white')
         st.plotly_chart(fig_hist, use_container_width=True)
 
     # Download predictions
@@ -127,14 +131,15 @@ else:
         # 🎨 Charts
         st.subheader("📊 Visual Insights from Input Data")
 
-        fig_pie = px.pie(input_df, names='workclass', title="Workclass Distribution", color_discrete_sequence=px.colors.sequential.RdBu)
+        fig_pie = px.pie(input_df, names='workclass', title="Workclass Distribution", color_discrete_sequence=['#2196F3'])
         fig_pie.update_traces(textinfo='percent+label', pull=[0.05])
+        fig_pie.update_layout(template='plotly_white')
         st.plotly_chart(fig_pie, use_container_width=True)
 
-        fig_bar = px.bar(input_df, x='occupation', y='hours_per_week', color='occupation', title="Occupation vs Hours per Week", color_discrete_sequence=px.colors.qualitative.Vivid)
+        fig_bar = px.bar(input_df, x='occupation', y='hours_per_week', color='occupation', title="Occupation vs Hours per Week", color_discrete_sequence=['#2196F3'])
         fig_bar.update_layout(xaxis_tickangle=-45, template='plotly_white')
         st.plotly_chart(fig_bar, use_container_width=True)
 
-        fig_hist = px.histogram(input_df, x='age', nbins=10, title="Age Distribution of Employees", color_discrete_sequence=['#E91E63'])
-        fig_hist.update_layout(template='plotly_dark')
+        fig_hist = px.histogram(input_df, x='age', nbins=10, title="Age Distribution of Employees", color_discrete_sequence=['#2196F3'])
+        fig_hist.update_layout(template='plotly_white')
         st.plotly_chart(fig_hist, use_container_width=True)
