@@ -53,18 +53,43 @@ def get_translations(lang):
     }
     return translations.get(lang, translations["en"])
 
-# Attractive Header with Icon and Subtitle
+# Attractive Header with Icon and Subtitle and Animation
 st.markdown('<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">', unsafe_allow_html=True)
-col1, col2 = st.columns([1, 8])
-with col1:
-    st.markdown('<i class="fas fa-robot fa-5x" style="color:#4CAF50;"></i>', unsafe_allow_html=True)
-with col2:
-    st.markdown("""
-        <div style='margin-top: 10px;'>
-            <h1 style='color:#2E86C1; font-size: 50px; margin-bottom: 5px;'>AI-Powered Salary Predictor 💼</h1>
-            <p style='color:#555; font-size: 20px;'>Empower your decisions with AI</p>
+st.markdown("""
+    <style>
+    @keyframes fadeInUp {
+        from {opacity: 0; transform: translateY(20px);}
+        to {opacity: 1; transform: translateY(0);}
+    }
+    .header-container {
+        display: flex;
+        align-items: center;
+        animation: fadeInUp 1s ease-out;
+    }
+    .header-icon {
+        font-size: 70px;
+        color: #4CAF50;
+        margin-right: 20px;
+    }
+    .header-text h1 {
+        color: #2E86C1;
+        font-size: 50px;
+        margin: 0;
+    }
+    .header-text p {
+        color: #555;
+        font-size: 22px;
+        margin-top: 5px;
+    }
+    </style>
+    <div class='header-container'>
+        <i class="fas fa-robot header-icon"></i>
+        <div class='header-text'>
+            <h1>AI-Powered Salary Predictor 💼</h1>
+            <p>Empower your decisions with AI</p>
         </div>
-    """, unsafe_allow_html=True)
+    </div>
+""", unsafe_allow_html=True)
 
 # Language selection below heading
 lang_choice = st.selectbox("🌐 Select Language / भाषा / భాష", ["en", "hi", "te"], format_func=lambda x: {"en": "English", "hi": "Hindi", "te": "Telugu"}[x])
